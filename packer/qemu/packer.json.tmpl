@@ -1,0 +1,85 @@
+{
+  "builders": [
+    {
+      "accelerator": "{{user `accelerator`}}",
+      "boot_command": [
+        "{{user `boot_command_prefix`}}",
+        "{{user `boot_media_path`}}",
+        "{{user `boot_command_suffix`}}"
+      ],
+      "boot_wait": "{{user `boot_wait`}}",
+      "cpu_model": "host",
+      "cpus": "{{user `cpus`}}",
+      "disk_compression": "{{ user `disk_compression`}}",
+      "disk_discard": "{{user `disk_discard`}}",
+      "disk_image": "{{ user `disk_image` }}",
+      "disk_interface": "virtio-scsi",
+      "disk_size": "{{user `disk_size`}}",
+      "firmware": "{{user `firmware`}}",
+      "format": "{{user `format`}}",
+      "headless": "{{user `headless`}}",
+      "http_directory": "{{user `http_directory`}}",
+      "iso_checksum": "{{user `iso_checksum_type`}}:{{user `iso_checksum`}}",
+      "iso_url": "{{user `iso_url`}}",
+      "memory": "{{user `memory`}}",
+      "net_device": "virtio-net",
+      "output_directory": "{{user `output_directory`}}",
+      "qemu_binary": "{{user `qemu_binary`}}",
+      "shutdown_command": "echo '{{user `ssh_password`}}' | sudo -S -E sh -c 'userdel -f -r {{user `ssh_username`}} && rm -f /etc/sudoers.d/{{user `ssh_username` }} && rm -f /etc/sudoers.d/90-cloud-init-users && {{user `shutdown_command`}}'",
+      "ssh_password": "{{user `ssh_password`}}",
+      "ssh_timeout": "2h",
+      "ssh_username": "{{user `ssh_username`}}",
+      "type": "qemu",
+      "vm_name": "{{user `vm_name`}}",
+      "vnc_bind_address": "{{user `vnc_bind_address`}}"
+    }
+  ],
+  "post-processors": [
+    {
+      "environment_vars": [
+        "CUSTOM_POST_PROCESSOR={{user `custom_post_processor`}}"
+      ],
+      "inline": [
+        "if [ \"$CUSTOM_POST_PROCESSOR\" != \"true\" ]; then exit 0; fi",
+        "{{user `custom_post_processor_command`}}"
+      ],
+      "name": "custom-post-processor",
+      "type": "shell-local"
+    }
+  ],
+  "provisioners": [    
+    {
+        "type": "shell",
+        "environment_vars": ["RKE2_VERSION={{user `rke2_semver`}}"],
+        "inline": [
+          "sudo bash ~/bootstrap.sh $RKE2_VERSION",
+          "rm ~/bootstrap.sh"
+        ]
+    }
+  ],
+  "variables": {
+    "accelerator": "kvm",
+    "artifact_name": "{{user `build_name`}}-rke2-{{user `rke2_semver`}}",
+    "boot_media_path": "http://{{ .HTTPIP }}:{{ .HTTPPort }}",
+    "boot_wait": "10s",
+    "build_timestamp": "{{timestamp}}",
+    "disk_compression": "false",
+    "disk_discard": "unmap",
+    "disk_image": "false",
+    "disk_size": "20480",
+    "firmware": "",
+    "format": "qcow2",
+    "headless": "true",
+    "http_directory": "./packer/qemu/linux/{{user `distro_name`}}/http/",
+    "machine_id_mode": "444",
+    "memory": "2048",
+    "oem_id": "",
+    "output_directory": "./output/{{user `build_name`}}-rke2-{{user `rke2_semver`}}",
+    "python_path": "",
+    "qemu_binary": "qemu-system-x86_64",
+    "ssh_password": "$SSH_PASSWORD",
+    "ssh_username": "builder",
+    "vm_name": "{{user `build_name`}}-rke2-{{user `rke2_semver`}}",
+    "vnc_bind_address": "127.0.0.1"
+  }
+}
